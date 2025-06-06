@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "LKM_Motor.h"
+#include "LKM_Motor_Receive.h"
 
 /* Communication Protocol Manual Version: V2.35 */
 /* Note:
@@ -98,7 +99,8 @@ void LKM_Motor::Read_Motor_State_2(){
   buffer[4] = checkSum;            //幀頭校驗字節
   MOTOR_SERIAL->write(buffer, 5);  //送出封包
   delayMicroseconds(delay_time);
-  _Receive_Pack(13);               //接收電機回覆
+  if(_bus) _bus->Receive_All(13);  //呼叫集中封包處理者
+  else _Receive_Pack(13);          //接收電機回覆
 }
 
 //(5)電機關機命令(0x80)
@@ -179,7 +181,8 @@ void LKM_Motor::Write_Torque_Current(double current){
   MOTOR_SERIAL->write(buffer, 8);  //送出封包
   if(_need_receive){
     delayMicroseconds(delay_time);
-    _Receive_Pack(13);             //接收電機回覆
+    if(_bus) _bus->Receive_All(13); //呼叫集中封包處理者
+    else _Receive_Pack(13);         //接收電機回覆
   }
 }
 
@@ -217,7 +220,8 @@ void LKM_Motor::Write_Speed(double speed){
   MOTOR_SERIAL->write(buffer, 10); //送出封包
   if(_need_receive){
     delayMicroseconds(delay_time);
-    _Receive_Pack(13);             //接收電機回覆
+    if(_bus) _bus->Receive_All(13); //呼叫集中封包處理者
+    else _Receive_Pack(13);         //接收電機回覆
   }
 }
 
@@ -253,7 +257,8 @@ void LKM_Motor::Write_Angle_MultiRound(double angle){
   MOTOR_SERIAL->write(buffer, 14); //送出封包
   if(_need_receive){
     delayMicroseconds(delay_time);
-    _Receive_Pack(13);             //接收電機回覆
+    if(_bus) _bus->Receive_All(13); //呼叫集中封包處理者
+    else _Receive_Pack(13);         //接收電機回覆
   }
 }
 
@@ -294,7 +299,8 @@ void LKM_Motor::Write_Angle_MultiRound(double angle, double max_speed){
   MOTOR_SERIAL->write(buffer, 18); //送出封包
   if(_need_receive){
     delayMicroseconds(delay_time);
-    _Receive_Pack(13);             //接收電機回覆
+    if(_bus) _bus->Receive_All(13); //呼叫集中封包處理者
+    else _Receive_Pack(13);         //接收電機回覆
   }
 }
 
@@ -328,7 +334,8 @@ void LKM_Motor::Write_Angle_SingleRound(double angle, bool direction){
   MOTOR_SERIAL->write(buffer, 10); //送出封包
   if(_need_receive){
     delayMicroseconds(delay_time);
-    _Receive_Pack(13);             //接收電機回覆
+    if(_bus) _bus->Receive_All(13); //呼叫集中封包處理者
+    else _Receive_Pack(13);         //接收電機回覆
   }
 }
 
@@ -367,7 +374,8 @@ void LKM_Motor::Write_Angle_SingleRound(double angle, double max_speed, bool dir
   MOTOR_SERIAL->write(buffer, 14); //送出封包
   if(_need_receive){
     delayMicroseconds(delay_time);
-    _Receive_Pack(13);             //接收電機回覆
+    if(_bus) _bus->Receive_All(13); //呼叫集中封包處理者
+    else _Receive_Pack(13);         //接收電機回覆
   }
 }
 
@@ -413,7 +421,8 @@ void LKM_Motor::Write_Angle_Increment(double angle_increment){
   MOTOR_SERIAL->write(buffer, 10); //送出封包
   if(_need_receive){
     delayMicroseconds(delay_time);
-    _Receive_Pack(13);             //接收電機回覆
+    if(_bus) _bus->Receive_All(13); //呼叫集中封包處理者
+    else _Receive_Pack(13);         //接收電機回覆
   }
 }
 
@@ -450,7 +459,8 @@ void LKM_Motor::Write_Angle_Increment(double angle_increment, double max_speed){
   MOTOR_SERIAL->write(buffer, 14); //送出封包
   if(_need_receive){
     delayMicroseconds(delay_time);
-    _Receive_Pack(13);             //接收電機回覆
+    if(_bus) _bus->Receive_All(13); //呼叫集中封包處理者
+    else _Receive_Pack(13);         //接收電機回覆
   }
 }
 
@@ -487,7 +497,8 @@ void LKM_Motor::Read_Angle_MultiRound(){
   buffer[4] = checkSum;            //幀頭校驗字節
   MOTOR_SERIAL->write(buffer, 5);  //送出封包
   delayMicroseconds(delay_time);
-  _Receive_Pack(14);               //接收電機回覆
+  if(_bus) _bus->Receive_All(14); //呼叫集中封包處理者
+  else _Receive_Pack(14);         //接收電機回覆
 }
 
 //(22)讀取單圈角度命令(0x94)
@@ -506,7 +517,8 @@ void LKM_Motor::Read_Angle_SingleRound(){
   buffer[4] = checkSum;            //幀頭校驗字節
   MOTOR_SERIAL->write(buffer, 5);  //送出封包
   delayMicroseconds(delay_time);
-  _Receive_Pack(10);               //接收電機回覆
+  if(_bus) _bus->Receive_All(10); //呼叫集中封包處理者
+  else _Receive_Pack(10);         //接收電機回覆
 }
 
 // //(24)讀取設定參數命令(0x40)
@@ -606,7 +618,17 @@ void LKM_Motor::Read_Angle_SingleRound(){
 //   delayMicroseconds(delay_time);
 //   _Receive_Pack(8);                //接收電機回覆
 // }
+void LKM_Motor::SetBus(LKM_Motor_Receive* bus) {
+  _bus = bus;
+}
 
+void LKM_Motor::Unpack(uint8_t* data) {
+  _Unpack(data);
+}
+
+int LKM_Motor::GetID(){
+  return _id;
+}
 /*----------------------------------------------------------------------------------------------------*/
 //接受回傳指令
 void LKM_Motor::_Receive_Pack(const int pack_length) {
@@ -662,7 +684,7 @@ void LKM_Motor::_Receive_Pack(const int pack_length) {
 }
 
 // 解讀封包內容
-void LKM_Motor::_Unpack(uint8_t data_receive[30]){
+void LKM_Motor::_Unpack(uint8_t* data_receive){
   // (3)讀取電機狀態2命令: 回傳電機溫度、電機轉矩電流值、電機轉速以及編碼器位置 (0x9C)
   // (10)轉矩閉環控制命令: 回傳電機溫度、電機轉矩電流值、電機轉速以及編碼器位置 (0xA1)
   // (11)速度閉環控制命令: 回傳電機溫度、轉矩電流、電機速度以及編碼器位置 (0xA2)
