@@ -1,4 +1,3 @@
-#include <LKM_Motor.h>
 /* LKM_Motor/examples/read_motor_angle/read_motor_angle.ino
 This is the example of read motor angle
 Using Teensy4.0 and "Motor Communication Control" PCB in NTU ASR-LAB, and use "RS485_1" port on the PCB
@@ -6,23 +5,31 @@ Using Teensy4.0 and "Motor Communication Control" PCB in NTU ASR-LAB, and use "R
 
 This example will read the angle of the motor specified by the user and print it, using 6 motors as an demonstration.
 */
+#include <LKM_Motor.h>
+#include <LKM_Motor_Receive.h>
 
 // define the number of motors
 #define motor_num 6
 // create a LKM_Motor object array
 LKM_Motor MotorArr[motor_num];
+// create a LKM_Motor_Receive object for handling the received data packets
+LKM_Motor_Receive MotorBus;
 
 int motorID = 0; //specified by the user, use 1 ~ 6 in this example
 
 void setup() {
   Serial.begin(115200);
+  /* Using "Motor Communication Control" PCB in NTU ASR-LAB, and use "RS485_1" port on the PCB, 
+    "RS485_1" is using Serial5 for communication */
+  MotorBus = LKM_Motor_Receive(5); // RS485_1 is Serial5;
+  MotorBus.debug_mode = true; // Print debug message in Receive_All() function
   for(int i = 0; i < motor_num; i++){
     // assign LKM_Motor object into array. MotorArr[0] is motor ID 1, MotorArr[1] is motor ID 2, MotorArr[2] is motor ID 3, etc.
-    MotorArr[i] = LKM_Motor(i+1, 8, 5); // (id, reduction_ratio, serial_port)
-    /* Using "Motor Communication Control" PCB in NTU ASR-LAB, and use "RS485_1" port on the PCB, 
-    "RS485_1" is using Serial5 for communication */
-    MotorArr[i].Print_Setup_Data();     // print out motor's setup data (id, reduction_ratio, serial_port)
-    MotorArr[i].Serial_Init();          // initialize the motor's serial port
+    MotorArr[i] = LKM_Motor(i+1, 8, 5);   // (id, reduction_ratio, serial_port)
+    MotorArr[i].Print_Setup_Data();       // print out motor's setup data (id, reduction_ratio, serial_port)
+    MotorArr[i].Serial_Init();            // initialize the motor's serial port
+    MotorArr[i].Set_Need_Receive(true);   // Modify the settings to require parsing the motor's returned data packet when executing non-reading information commands 
+    MotorBus.RegisterMotor(&MotorArr[i]); // register the motor to the motor bus
   }
 }
 
