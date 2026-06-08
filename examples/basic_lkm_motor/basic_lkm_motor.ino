@@ -1,9 +1,8 @@
 #include <LKM_Motor.h>
 
-LKM_Motor motor(1, 8, 5);
+LKM_Motor motor(6, 8, 5, MEDIUM_BAUDRATE);
 
 void setup() {
-  motor.Change_Baudrate(2000000);
   motor.Serial_Init();
   motor.Set_Need_Receive(true);
   Serial.begin(115200);

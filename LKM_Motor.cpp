@@ -16,7 +16,7 @@ LKM_Motor::LKM_Motor() {
   _reduction_ratio = 0;
   _serial_port = 0;
   _Kt = 0.0;
-  _baudrate = LKM_Motor_BAUDRATE;
+  _baudrate = DEFAULT_BAUDRATE;
   _need_receive = false;
 }
 
@@ -25,7 +25,7 @@ LKM_Motor::LKM_Motor(int id, int reduction_ratio, int serial_port) {
   _reduction_ratio = reduction_ratio;
   _serial_port = serial_port;
   _Kt = 0.0;
-  _baudrate = LKM_Motor_BAUDRATE;
+  _baudrate = DEFAULT_BAUDRATE;
   _need_receive = false;
 }
 
@@ -34,43 +34,32 @@ LKM_Motor::LKM_Motor(int id, int reduction_ratio, int serial_port, double Kt) {
   _reduction_ratio = reduction_ratio;
   _serial_port = serial_port;
   _Kt = Kt;
-  _baudrate = LKM_Motor_BAUDRATE;
+  _baudrate = DEFAULT_BAUDRATE;
+  _need_receive = false;
+}
+
+LKM_Motor::LKM_Motor(int id, int reduction_ratio, int serial_port,
+                     int baudrate) {
+  _id = id;
+  _reduction_ratio = reduction_ratio;
+  _serial_port = serial_port;
+  _Kt = 0.0;
+  _baudrate = baudrate;
   _need_receive = false;
 }
 
 void LKM_Motor::Serial_Init() {
-  if (_serial_port == 1) {
-    MOTOR_SERIAL = &Serial1;
-    Serial1.begin(_baudrate);
-  } else if (_serial_port == 2) {
-    MOTOR_SERIAL = &Serial2;
-    Serial2.begin(_baudrate);
-  } else if (_serial_port == 3) {
-    MOTOR_SERIAL = &Serial3;
-    Serial3.begin(_baudrate);
-    /* If using "Motor Communication Control" PCB board in NTU ASR-LAB,
-    the RS485_2 is using Serial3 for communication,
-    and use GPIO-13 to switch between TX and RX. */
-    Serial3.transmitterEnable(13);
-  } else if (_serial_port == 4) {
-    MOTOR_SERIAL = &Serial4;
-    Serial4.begin(_baudrate);
-  } else if (_serial_port == 5) {
-    MOTOR_SERIAL = &Serial5;
-    Serial5.begin(_baudrate);
-    /* If using "Motor Communication Control" PCB board in NTU ASR-LAB,
-    the RS485_1 is using Serial5 for communication,
-    and use GPIO-2 to switch between TX and RX. */
-    Serial5.transmitterEnable(2);
-  } else if (_serial_port == 6) {
-    MOTOR_SERIAL = &Serial6;
-    Serial6.begin(_baudrate);
-  } else if (_serial_port == 7) {
-    MOTOR_SERIAL = &Serial7;
-    Serial7.begin(_baudrate);
-  } else {
+  if (_serial_port >= MAX_SERIAL_ID) {
     Serial.println("===== Serial Port Error! =====");
   }
+  MOTOR_SERIAL = SERIAL_MAP.at(_serial_port);
+  SERIAL_MAP.at(_serial_port)->begin(_baudrate);
+  if (_serial_port == ID3 || _serial_port == ID5) {
+    SERIAL_MAP.at(_serial_port)
+        ->transmitterEnable(SERIAL_DE_PIN.at(_serial_port));
+  };
+  //
+  Serial.println("===== Init successfully! =====");
 }
 
 void LKM_Motor::Change_Baudrate(int baudrate) {
